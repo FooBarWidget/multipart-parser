@@ -12,8 +12,6 @@ private:
 	static const char SPACE  = 32;
 	static const char HYPHEN = 45;
 	static const char COLON  = 58;
-	static const char A      = 97;
-	static const char Z      = 122;
 	static const size_t UNMARKED = (size_t) -1;
 	
 	enum State {
@@ -181,12 +179,14 @@ public:
 			case START_BOUNDARY:
 				if (index == boundarySize - 2) {
 					if (c != CR) {
+						setError("Malformed. Expected CR after boundary.");
 						return i;
 					}
 					index++;
 					break;
 				} else if (index - 1 == boundarySize - 2) {
 					if (c != LF) {
+						setError("Malformed. Expected LF after boundary CR.");
 						return i;
 					}
 					index = 0;
@@ -224,7 +224,7 @@ public:
 				}
 
 				cl = lower(c);
-				if (cl < A || cl > Z) {
+				if (cl < 'A' || cl > 'Z') {
 					setError("Malformed header name.");
 					return i;
 				}
@@ -336,6 +336,7 @@ public:
 					// when matching a possible boundary, keep a lookbehind reference
 					// in case it turns out to be a false lead
 					if (index - 1 >= lookbehindSize) {
+						setError("Internal error");
 						throw std::out_of_range("index overflows lookbehind buffer");
 					}
 					lookbehind[index - 1] = c;
@@ -425,7 +426,7 @@ main() {
 	parser.onEnd = onEnd;
 	
 	while (!parser.stopped() && !feof(stdin)) {
-		char buf[5];
+		char buf[100];
 		size_t len = fread(buf, 1, sizeof(buf), stdin);
 		size_t fed = 0;
 		do {
