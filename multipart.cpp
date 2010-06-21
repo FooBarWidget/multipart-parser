@@ -84,6 +84,10 @@ private:
 		return false;
 	}
 	
+	void setError(const char *message) {
+		state = ERROR;
+	}
+	
 public:
 	Callback onPartBegin;
 	Callback onHeaderField;
@@ -195,6 +199,7 @@ public:
 
 				cl = lower(c);
 				if (cl < A || cl > Z) {
+					setError("Malformed header name.");
 					return i;
 				}
 				break;
@@ -213,6 +218,7 @@ public:
 				break;
 			case HEADER_VALUE_ALMOST_DONE:
 				if (c != LF) {
+					setError("Malformed header value: LF expected after CR");
 					return i;
 				}
 				
@@ -320,6 +326,18 @@ public:
 		
 		return len;
 	}
+	
+	bool succeeded() const {
+		return state == END;
+	}
+	
+	bool hasError() const {
+		return state == ERROR;
+	}
+	
+	bool stopped() const {
+		return state == ERROR || state == END;
+	}
 };
 
 #include <stdio.h>
@@ -373,7 +391,7 @@ main() {
 			size_t ret = parser.feed(buf + fed, len - fed);
 			fed += ret;
 			printf("accepted %d bytes\n", (int) ret);
-		} while (fed < len);
+		} while (fed < len && !parser.stopped());
 	}
 	return 0;
 }
