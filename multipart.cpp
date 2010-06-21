@@ -46,6 +46,7 @@ private:
 	size_t headerFieldMark;
 	size_t headerValueMark;
 	size_t partDataMark;
+	const char *errorReason;
 	
 	void callback(Callback cb, const char *buffer = NULL, size_t start = UNMARKED, size_t end = UNMARKED) {
 		if (start != UNMARKED && start == end) {
@@ -89,6 +90,7 @@ private:
 	
 	void setError(const char *message) {
 		state = ERROR;
+		errorReason = message;
 	}
 	
 public:
@@ -124,6 +126,7 @@ public:
 		headerFieldMark = UNMARKED;
 		headerValueMark = UNMARKED;
 		partDataMark    = UNMARKED;
+		errorReason = NULL;
 		
 		onPartBegin   = NULL;
 		onHeaderField = NULL;
@@ -354,6 +357,10 @@ public:
 	bool stopped() const {
 		return state == ERROR || state == END;
 	}
+	
+	const char *getErrorMessage() const {
+		return errorReason;
+	}
 };
 
 #include <stdio.h>
@@ -399,8 +406,8 @@ main() {
 	parser.onPartEnd = onPartEnd;
 	parser.onEnd = onEnd;
 	
-	while (!feof(stdin)) {
-		char buf[1024 * 16];
+	while (!parser.stopped() && !feof(stdin)) {
+		char buf[5];
 		size_t len = fread(buf, 1, sizeof(buf), stdin);
 		size_t fed = 0;
 		do {
@@ -409,5 +416,6 @@ main() {
 			printf("accepted %d bytes\n", (int) ret);
 		} while (fed < len && !parser.stopped());
 	}
+	printf("%s\n", parser.getErrorMessage());
 	return 0;
 }
