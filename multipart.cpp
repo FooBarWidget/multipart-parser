@@ -146,6 +146,10 @@ public:
 	}
 	
 	size_t feed(const char *buffer, size_t len) {
+		if (state == ERROR) {
+			return 0;
+		}
+		
 		State state         = this->state;
 		int flags           = this->flags;
 		size_t prevIndex    = this->index;
