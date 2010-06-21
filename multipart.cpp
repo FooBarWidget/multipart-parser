@@ -48,8 +48,10 @@ private:
 	size_t partDataMark;
 	const char *errorReason;
 	
-	void callback(Callback cb, const char *buffer = NULL, size_t start = UNMARKED, size_t end = UNMARKED) {
-		if (start != UNMARKED && start == end) {
+	void callback(Callback cb, const char *buffer = NULL, size_t start = UNMARKED,
+		size_t end = UNMARKED, bool allowEmpty = false)
+	{
+		if (start != UNMARKED && start == end && !allowEmpty) {
 			return;
 		}
 		if (cb != NULL) {
@@ -57,16 +59,18 @@ private:
 		}
 	}
 	
-	void dataCallback(Callback cb, size_t &mark, const char *buffer, size_t i, size_t bufferLen, bool clear) {
+	void dataCallback(Callback cb, size_t &mark, const char *buffer, size_t i, size_t bufferLen,
+		bool clear, bool allowEmpty = false)
+	{
 		if (mark == UNMARKED) {
 			return;
 		}
 		
 		if (!clear) {
-			callback(cb, buffer, mark, bufferLen);
+			callback(cb, buffer, mark, bufferLen, allowEmpty);
 			mark = 0;
 		} else {
-			callback(cb, buffer, mark, i);
+			callback(cb, buffer, mark, i, allowEmpty);
 			mark = UNMARKED;
 		}
 	}
@@ -234,7 +238,7 @@ public:
 				state = HEADER_VALUE;
 			case HEADER_VALUE:
 				if (c == CR) {
-					dataCallback(onHeaderValue, headerValueMark, buffer, i, len, true);
+					dataCallback(onHeaderValue, headerValueMark, buffer, i, len, true, true);
 					state = HEADER_VALUE_ALMOST_DONE;
 				}
 				break;
