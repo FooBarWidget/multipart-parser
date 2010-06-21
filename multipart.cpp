@@ -88,6 +88,12 @@ private:
 		return false;
 	}
 	
+	bool isHeaderFieldCharacter(char c) const {
+		return (c >= 'a' && c <= 'z')
+			|| (c >= 'A' && c <= 'Z')
+			|| c == HYPHEN;
+	}
+	
 	void setError(const char *message) {
 		state = ERROR;
 		errorReason = message;
@@ -192,6 +198,10 @@ public:
 			case HEADER_FIELD_START:
 				state = HEADER_FIELD;
 				headerFieldMark = i;
+				if (c != CR && !isHeaderFieldCharacter(c)) {
+					setError("Malformd first header name character.");
+					return i;
+				}
 			case HEADER_FIELD:
 				if (c == CR) {
 					headerFieldMark = UNMARKED;
