@@ -63,6 +63,7 @@ private:
 		
 		if (!clear) {
 			callback(cb, buffer, mark, bufferLen);
+			mark = 0;
 		} else {
 			callback(cb, buffer, mark, i);
 			mark = UNMARKED;
