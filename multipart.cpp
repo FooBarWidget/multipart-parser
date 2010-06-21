@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <string>
+#include <stdexcept>
 
 class MultipartParser {
 public:
@@ -38,6 +39,7 @@ private:
 	
 	std::string boundary;
 	char *lookbehind;
+	size_t lookbehindSize;
 	State state;
 	int flags;
 	size_t index;
@@ -115,6 +117,7 @@ public:
 		delete[] lookbehind;
 		state = ERROR;
 		lookbehind = NULL;
+		lookbehindSize = 0;
 		flags = 0;
 		index = 0;
 		headerFieldMark = UNMARKED;
@@ -134,6 +137,7 @@ public:
 		reset();
 		this->boundary = "\r\n--" + boundary;
 		lookbehind = new char[this->boundary.size() + 8];
+		lookbehindSize = this->boundary.size() + 8;
 		state = START;
 	}
 	
@@ -222,6 +226,14 @@ public:
 					return i;
 				}
 				
+				state = HEADER_FIELD_START;
+				break;
+			case HEADERS_ALMOST_DONE:
+				if (c != LF) {
+					setError("Malformed header ending: LF expected after CR");
+					return i;
+				}
+				
 				state = PART_DATA_START;
 				break;
 			case PART_DATA_START:
@@ -301,6 +313,9 @@ public:
 				if (index > 0) {
 					// when matching a possible boundary, keep a lookbehind reference
 					// in case it turns out to be a false lead
+					if (index - 1 >= lookbehindSize) {
+						throw std::out_of_range("index overflows lookbehind buffer");
+					}
 					lookbehind[index - 1] = c;
 				} else if (prevIndex > 0) {
 					// if our boundary turned out to be rubbish, the captured lookbehind
