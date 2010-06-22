@@ -154,7 +154,7 @@ public:
 	}
 	
 	size_t feed(const char *buffer, size_t len) {
-		if (state == ERROR) {
+		if (state == ERROR || len == 0) {
 			return 0;
 		}
 		
