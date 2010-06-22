@@ -1,2 +1,2 @@
-multipart: multipart.cpp
+multipart: multipart.cpp MultipartParser.h
 	g++ -Wall multipart.cpp -o multipart
