@@ -202,10 +202,7 @@ public:
 			case HEADER_FIELD_START:
 				state = HEADER_FIELD;
 				headerFieldMark = i;
-				if (c != CR && !isHeaderFieldCharacter(c)) {
-					setError("Malformd first header name character.");
-					return i;
-				}
+				index = 0;
 			case HEADER_FIELD:
 				if (c == CR) {
 					headerFieldMark = UNMARKED;
@@ -213,11 +210,17 @@ public:
 					break;
 				}
 
+				index++;
 				if (c == HYPHEN) {
 					break;
 				}
 
 				if (c == COLON) {
+					if (index == 1) {
+						// empty header field
+						setError("Malformed first header name character.");
+						return i;
+					}
 					dataCallback(onHeaderField, headerFieldMark, buffer, i, len, true);
 					state = HEADER_VALUE_START;
 					break;
