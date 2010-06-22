@@ -349,6 +349,10 @@ public:
 					callback(onPartData, lookbehind, 0, prevIndex);
 					prevIndex = 0;
 					partDataMark = i;
+					
+					// reconsider the current character even so it interrupted the sequence
+					// it could be the beginning of a new sequence
+					i--;
 				}
 
 				break;
