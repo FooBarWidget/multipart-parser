@@ -224,7 +224,7 @@ public:
 				}
 
 				cl = lower(c);
-				if (cl < 'A' || cl > 'Z') {
+				if (cl < 'a' || cl > 'z') {
 					setError("Malformed header name.");
 					return i;
 				}
