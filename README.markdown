@@ -29,7 +29,9 @@ Goals and highlights of this parser
    be a multipart message, but this parser doesn't attempt to provide a
    complex API for handling nested multipart messages. Instead the developer
    should just use another parser instance to parse nested messages.
- * No I/O is handled for you. So this parser won't depend on any particular
-   I/O library or even any particular operating system's I/O API and won't
-   block on I/O by itself, giving you full control.
+ * No I/O is handled for you. This parser won't depend on any particular
+   I/O library or even any particular operating system's I/O API. It won't
+   block on I/O by itself, giving you full control over when (not) to block.
+   It won't save data to files by itself, giving you full control over what to
+   do with the parsed data.
  * Not thread-safe, but reentrant. No dependencies on any threading libraries.
