@@ -49,6 +49,18 @@ private:
 	size_t partDataMark;
 	const char *errorReason;
 	
+	void resetCallbacks() {
+		onPartBegin   = NULL;
+		onHeaderField = NULL;
+		onHeaderValue = NULL;
+		onHeaderDone  = NULL;
+		onHeadersDone = NULL;
+		onPartData    = NULL;
+		onPartEnd     = NULL;
+		onEnd         = NULL;
+		userData      = NULL;
+	}
+	
 	void callback(Callback cb, const char *buffer = NULL, size_t start = UNMARKED,
 		size_t end = UNMARKED, bool allowEmpty = false)
 	{
@@ -108,6 +120,8 @@ public:
 	Callback onPartBegin;
 	Callback onHeaderField;
 	Callback onHeaderValue;
+	Callback onHeaderDone;
+	Callback onHeadersDone;
 	Callback onPartData;
 	Callback onPartEnd;
 	Callback onEnd;
@@ -115,11 +129,13 @@ public:
 	
 	MultipartParser() {
 		lookbehind = NULL;
+		resetCallbacks();
 		reset();
 	}
 	
 	MultipartParser(const std::string &boundary) {
 		lookbehind = NULL;
+		resetCallbacks();
 		setBoundary(boundary);
 	}
 	
@@ -137,15 +153,7 @@ public:
 		headerFieldMark = UNMARKED;
 		headerValueMark = UNMARKED;
 		partDataMark    = UNMARKED;
-		errorReason = "Parser uninitialized.";
-		
-		onPartBegin   = NULL;
-		onHeaderField = NULL;
-		onHeaderValue = NULL;
-		onPartData    = NULL;
-		onPartEnd     = NULL;
-		onEnd         = NULL;
-		userData      = NULL;
+		errorReason     = "Parser uninitialized.";
 	}
 	
 	void setBoundary(const std::string &boundary) {
@@ -154,6 +162,7 @@ public:
 		lookbehind = new char[this->boundary.size() + 8];
 		lookbehindSize = this->boundary.size() + 8;
 		state = START;
+		errorReason = "No error.";
 	}
 	
 	size_t feed(const char *buffer, size_t len) {
@@ -254,6 +263,7 @@ public:
 					return i;
 				}
 				
+				callback(onHeaderDone);
 				state = HEADER_FIELD_START;
 				break;
 			case HEADERS_ALMOST_DONE:
@@ -262,6 +272,7 @@ public:
 					return i;
 				}
 				
+				callback(onHeadersDone);
 				state = PART_DATA_START;
 				break;
 			case PART_DATA_START:
