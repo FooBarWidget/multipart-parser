@@ -48,7 +48,7 @@ using namespace std;
 	}
 	
 	void onPartData(const char *buffer, size_t size, void *userData) {
-		printf("onPartData: (%s)\n", string(buffer, size).c_str());
+		//printf("onPartData: (%s)\n", string(buffer, size).c_str());
 	}
 	
 	void onPartEnd(void *userData) {
@@ -63,7 +63,7 @@ using namespace std;
 int
 main() {
 	#ifdef TEST_PARSER
-		MultipartParser parser("abcd");
+		MultipartParser parser;
 		parser.onPartBegin = onPartBegin;
 		parser.onHeaderField = onHeaderField;
 		parser.onHeaderValue = onHeaderValue;
@@ -71,23 +71,29 @@ main() {
 		parser.onPartEnd = onPartEnd;
 		parser.onEnd = onEnd;
 	#else
-		MultipartReader parser("abcd");
+		MultipartReader parser;
 		parser.onPartBegin = onPartBegin;
 		parser.onPartData = onPartData;
 		parser.onPartEnd = onPartEnd;
 		parser.onEnd = onEnd;
 	#endif
 	
-	while (!parser.stopped() && !feof(stdin)) {
-		char buf[100];
-		size_t len = fread(buf, 1, sizeof(buf), stdin);
-		size_t fed = 0;
-		do {
-			size_t ret = parser.feed(buf + fed, len - fed);
-			fed += ret;
-			//printf("accepted %d bytes\n", (int) ret);
-		} while (fed < len && !parser.stopped());
+	for (int i = 0; i < 5; i++) {
+		parser.setBoundary("abcd");
+		
+		FILE *f = fopen("input2.txt", "rb");
+		while (!parser.stopped() && !feof(f)) {
+			char buf[100];
+			size_t len = fread(buf, 1, sizeof(buf), f);
+			size_t fed = 0;
+			do {
+				size_t ret = parser.feed(buf + fed, len - fed);
+				fed += ret;
+				//printf("accepted %d bytes\n", (int) ret);
+			} while (fed < len && !parser.stopped());
+		}
+		printf("%s\n", parser.getErrorMessage());
+		fclose(f);
 	}
-	printf("%s\n", parser.getErrorMessage());
 	return 0;
 }
