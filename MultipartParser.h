@@ -94,17 +94,8 @@ private:
 		return c | 0x20;
 	}
 	
-	bool isBoundaryChar(char c) const {
-		const char *current = boundary.c_str();
-		const char *end = current + boundary.size();
-		
-		while (current < end) {
-			if (*current == c) {
-				return true;
-			}
-			current++;
-		}
-		return false;
+	inline bool isBoundaryChar(char c) const {
+		return memchr(boundaryData, c, boundarySize) != NULL;
 	}
 	
 	bool isHeaderFieldCharacter(char c) const {
