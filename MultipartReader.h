@@ -6,11 +6,13 @@
 #include "MultipartParser.h"
 
 class MultipartHeaders: public std::multimap<std::string, std::string> {
+private:
+	std::string empty;
 public:
-	std::string operator[](const std::string &key) const {
+	const std::string &operator[](const std::string &key) const {
 		const_iterator it = find(key);
 		if (it == end()) {
-			return std::string();
+			return empty;
 		} else {
 			return it->second;
 		}
