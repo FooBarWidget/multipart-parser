@@ -2,7 +2,8 @@
 #include "MultipartReader.h"
 #include <stdio.h>
 
-#define TEST_PARSER
+//#define TEST_PARSER
+#define INPUT_FILE "input2.txt"
 
 using namespace std;
 
@@ -81,7 +82,7 @@ main() {
 	for (int i = 0; i < 5; i++) {
 		parser.setBoundary("abcd");
 		
-		FILE *f = fopen("input.txt", "rb");
+		FILE *f = fopen(INPUT_FILE, "rb");
 		while (!parser.stopped() && !feof(f)) {
 			char buf[100];
 			size_t len = fread(buf, 1, sizeof(buf), f);

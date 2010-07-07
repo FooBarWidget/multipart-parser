@@ -41,6 +41,7 @@ private:
 	std::string boundary;
 	const char *boundaryData;
 	size_t boundarySize;
+	bool boundaryIndex[256];
 	char *lookbehind;
 	size_t lookbehindSize;
 	State state;
@@ -61,6 +62,17 @@ private:
 		onPartEnd     = NULL;
 		onEnd         = NULL;
 		userData      = NULL;
+	}
+	
+	void indexBoundary() {
+		const char *current;
+		const char *end = boundaryData + boundarySize;
+		
+		memset(boundaryIndex, 0, sizeof(boundaryIndex));
+		
+		for (current = boundaryData; current < end; current++) {
+			boundaryIndex[(unsigned char) *current] = true;
+		}
 	}
 	
 	void callback(Callback cb, const char *buffer = NULL, size_t start = UNMARKED,
@@ -95,7 +107,7 @@ private:
 	}
 	
 	inline bool isBoundaryChar(char c) const {
-		return memchr(boundaryData, c, boundarySize) != NULL;
+		return boundaryIndex[(unsigned char) c];
 	}
 	
 	bool isHeaderFieldCharacter(char c) const {
@@ -256,6 +268,7 @@ public:
 		this->boundary = "\r\n--" + boundary;
 		boundaryData = this->boundary.c_str();
 		boundarySize = this->boundary.size();
+		indexBoundary();
 		lookbehind = new char[boundarySize + 8];
 		lookbehindSize = boundarySize + 8;
 		state = START;
