@@ -116,6 +116,105 @@ private:
 		errorReason = message;
 	}
 	
+	void processPartData(size_t &prevIndex, size_t &index, const char *buffer,
+		size_t len, size_t boundaryEnd, size_t &i, char c, int &flags)
+	{
+		prevIndex = index;
+		
+		if (index == 0) {
+			// boyer-moore derrived algorithm to safely skip non-boundary data
+			while (i + boundary.size() <= len) {
+				if (isBoundaryChar(buffer[i + boundaryEnd])) {
+					break;
+				}
+				
+				i += boundary.size();
+			}
+			c = buffer[i];
+		}
+		
+		if (index < boundary.size()) {
+			if (boundary[index] == c) {
+				if (index == 0) {
+					dataCallback(onPartData, partDataMark, buffer, i, len, true);
+				}
+				index++;
+			} else {
+				index = 0;
+			}
+		} else if (index == boundary.size()) {
+			index++;
+			if (c == CR) {
+				// CR = part boundary
+				flags |= PART_BOUNDARY;
+			} else if (c == HYPHEN) {
+				// HYPHEN = end boundary
+				flags |= LAST_BOUNDARY;
+			} else {
+				index = 0;
+			}
+		} else if (index - 1 == boundary.size()) {
+			if (flags & PART_BOUNDARY) {
+				index = 0;
+				if (c == LF) {
+					// unset the PART_BOUNDARY flag
+					flags &= ~PART_BOUNDARY;
+					callback(onPartEnd);
+					callback(onPartBegin);
+					state = HEADER_FIELD_START;
+					return;
+				}
+			} else if (flags & LAST_BOUNDARY) {
+				if (c == HYPHEN) {
+					index++;
+				} else {
+					index = 0;
+				}
+			} else {
+				index = 0;
+			}
+		} else if (index - 2 == boundary.size()) {
+			if (c == CR) {
+				index++;
+			} else {
+				index = 0;
+			}
+		} else if (index - boundary.size() == 3) {
+			index = 0;
+			if (c == LF) {
+				callback(onPartEnd);
+				callback(onEnd);
+				state = END;
+				return;
+			}
+		}
+		
+		if (index > 0) {
+			// when matching a possible boundary, keep a lookbehind reference
+			// in case it turns out to be a false lead
+			if (index - 1 >= lookbehindSize) {
+				setError("Parser bug: index overflows lookbehind buffer. "
+					"Please send bug report with input file attached.");
+				throw std::out_of_range("index overflows lookbehind buffer");
+			} else if (index - 1 < 0) {
+				setError("Parser bug: index underflows lookbehind buffer. "
+					"Please send bug report with input file attached.");
+				throw std::out_of_range("index underflows lookbehind buffer");
+			}
+			lookbehind[index - 1] = c;
+		} else if (prevIndex > 0) {
+			// if our boundary turned out to be rubbish, the captured lookbehind
+			// belongs to partData
+			callback(onPartData, lookbehind, 0, prevIndex);
+			prevIndex = 0;
+			partDataMark = i;
+			
+			// reconsider the current character even so it interrupted the sequence
+			// it could be the beginning of a new sequence
+			i--;
+		}
+	}
+	
 public:
 	Callback onPartBegin;
 	Callback onHeaderField;
@@ -279,101 +378,8 @@ public:
 				state = PART_DATA;
 				partDataMark = i;
 			case PART_DATA:
-				prevIndex = index;
-				
-				if (index == 0) {
-					// boyer-moore derrived algorithm to safely skip non-boundary data
-					while (i + boundary.size() <= len) {
-						if (isBoundaryChar(buffer[i + boundaryEnd])) {
-							break;
-						}
-						
-						i += boundary.size();
-					}
-					c = buffer[i];
-				}
-				
-				if (index < boundary.size()) {
-					if (boundary[index] == c) {
-						if (index == 0) {
-							dataCallback(onPartData, partDataMark, buffer, i, len, true);
-						}
-						index++;
-					} else {
-						index = 0;
-					}
-				} else if (index == boundary.size()) {
-					index++;
-					if (c == CR) {
-						// CR = part boundary
-						flags |= PART_BOUNDARY;
-					} else if (c == HYPHEN) {
-						// HYPHEN = end boundary
-						flags |= LAST_BOUNDARY;
-					} else {
-						index = 0;
-					}
-				} else if (index - 1 == boundary.size()) {
-					if (flags & PART_BOUNDARY) {
-						index = 0;
-						if (c == LF) {
-							// unset the PART_BOUNDARY flag
-							flags &= ~PART_BOUNDARY;
-							callback(onPartEnd);
-							callback(onPartBegin);
-							state = HEADER_FIELD_START;
-							break;
-						}
-					} else if (flags & LAST_BOUNDARY) {
-						if (c == HYPHEN) {
-							index++;
-						} else {
-							index = 0;
-						}
-					} else {
-						index = 0;
-					}
-				} else if (index - 2 == boundary.size()) {
-					if (c == CR) {
-						index++;
-					} else {
-						index = 0;
-					}
-				} else if (index - boundary.size() == 3) {
-					index = 0;
-					if (c == LF) {
-						callback(onPartEnd);
-						callback(onEnd);
-						state = END;
-						break;
-					}
-				}
-				
-				if (index > 0) {
-					// when matching a possible boundary, keep a lookbehind reference
-					// in case it turns out to be a false lead
-					if (index - 1 >= lookbehindSize) {
-						setError("Parser bug: index overflows lookbehind buffer. "
-							"Please send bug report with input file attached.");
-						throw std::out_of_range("index overflows lookbehind buffer");
-					} else if (index - 1 < 0) {
-						setError("Parser bug: index underflows lookbehind buffer. "
-							"Please send bug report with input file attached.");
-						throw std::out_of_range("index underflows lookbehind buffer");
-					}
-					lookbehind[index - 1] = c;
-				} else if (prevIndex > 0) {
-					// if our boundary turned out to be rubbish, the captured lookbehind
-					// belongs to partData
-					callback(onPartData, lookbehind, 0, prevIndex);
-					prevIndex = 0;
-					partDataMark = i;
-					
-					// reconsider the current character even so it interrupted the sequence
-					// it could be the beginning of a new sequence
-					i--;
-				}
-
+				processPartData(prevIndex, index, buffer, len, boundaryEnd,
+					i, c, flags);
 				break;
 			default:
 				return i;
