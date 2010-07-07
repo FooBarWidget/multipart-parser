@@ -39,6 +39,8 @@ private:
 	};
 	
 	std::string boundary;
+	const char *boundaryData;
+	size_t boundarySize;
 	char *lookbehind;
 	size_t lookbehindSize;
 	State state;
@@ -123,17 +125,17 @@ private:
 		
 		if (index == 0) {
 			// boyer-moore derrived algorithm to safely skip non-boundary data
-			while (i + boundary.size() <= len) {
+			while (i + boundarySize <= len) {
 				if (isBoundaryChar(buffer[i + boundaryEnd])) {
 					break;
 				}
 				
-				i += boundary.size();
+				i += boundarySize;
 			}
 			c = buffer[i];
 		}
 		
-		if (index < boundary.size()) {
+		if (index < boundarySize) {
 			if (boundary[index] == c) {
 				if (index == 0) {
 					dataCallback(onPartData, partDataMark, buffer, i, len, true);
@@ -142,7 +144,7 @@ private:
 			} else {
 				index = 0;
 			}
-		} else if (index == boundary.size()) {
+		} else if (index == boundarySize) {
 			index++;
 			if (c == CR) {
 				// CR = part boundary
@@ -153,7 +155,7 @@ private:
 			} else {
 				index = 0;
 			}
-		} else if (index - 1 == boundary.size()) {
+		} else if (index - 1 == boundarySize) {
 			if (flags & PART_BOUNDARY) {
 				index = 0;
 				if (c == LF) {
@@ -173,13 +175,13 @@ private:
 			} else {
 				index = 0;
 			}
-		} else if (index - 2 == boundary.size()) {
+		} else if (index - 2 == boundarySize) {
 			if (c == CR) {
 				index++;
 			} else {
 				index = 0;
 			}
-		} else if (index - boundary.size() == 3) {
+		} else if (index - boundarySize == 3) {
 			index = 0;
 			if (c == LF) {
 				callback(onPartEnd);
@@ -245,6 +247,9 @@ public:
 	void reset() {
 		delete[] lookbehind;
 		state = ERROR;
+		boundary.clear();
+		boundaryData = boundary.c_str();
+		boundarySize = 0;
 		lookbehind = NULL;
 		lookbehindSize = 0;
 		flags = 0;
@@ -258,8 +263,10 @@ public:
 	void setBoundary(const std::string &boundary) {
 		reset();
 		this->boundary = "\r\n--" + boundary;
-		lookbehind = new char[this->boundary.size() + 8];
-		lookbehindSize = this->boundary.size() + 8;
+		boundaryData = this->boundary.c_str();
+		boundarySize = this->boundary.size();
+		lookbehind = new char[boundarySize + 8];
+		lookbehindSize = boundarySize + 8;
 		state = START;
 		errorReason = "No error.";
 	}
@@ -273,7 +280,6 @@ public:
 		int flags           = this->flags;
 		size_t prevIndex    = this->index;
 		size_t index        = this->index;
-		size_t boundarySize = boundary.size();
 		size_t boundaryEnd  = boundarySize - 1;
 		size_t i;
 		char c, cl;
