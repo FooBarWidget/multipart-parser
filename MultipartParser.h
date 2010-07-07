@@ -316,6 +316,7 @@ public:
 					break;
 				}
 				if (c != boundary[index + 2]) {
+					setError("Malformed. Found different boundary data than the given one.");
 					return i;
 				}
 				index++;
