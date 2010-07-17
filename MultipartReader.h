@@ -36,8 +36,8 @@ private:
 		parser.onPartBegin   = cbPartBegin;
 		parser.onHeaderField = cbHeaderField;
 		parser.onHeaderValue = cbHeaderValue;
-		parser.onHeaderDone  = cbHeaderDone;
-		parser.onHeadersDone = cbHeadersDone;
+		parser.onHeaderEnd   = cbHeaderEnd;
+		parser.onHeadersEnd  = cbHeadersEnd;
 		parser.onPartData    = cbPartData;
 		parser.onPartEnd     = cbPartEnd;
 		parser.onEnd         = cbEnd;
@@ -62,7 +62,7 @@ private:
 		self->currentHeaderValue.append(buffer + start, end - start);
 	}
 	
-	static void cbHeaderDone(const char *buffer, size_t start, size_t end, void *userData) {
+	static void cbHeaderEnd(const char *buffer, size_t start, size_t end, void *userData) {
 		MultipartReader *self = (MultipartReader *) userData;
 		self->currentHeaders.insert(std::make_pair(self->currentHeaderName,
 			self->currentHeaderValue));
@@ -70,7 +70,7 @@ private:
 		self->currentHeaderValue.clear();
 	}
 	
-	static void cbHeadersDone(const char *buffer, size_t start, size_t end, void *userData) {
+	static void cbHeadersEnd(const char *buffer, size_t start, size_t end, void *userData) {
 		MultipartReader *self = (MultipartReader *) userData;
 		if (self->onPartBegin != NULL) {
 			self->onPartBegin(self->currentHeaders, self->userData);

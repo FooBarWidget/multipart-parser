@@ -3,7 +3,9 @@
 #include <stdio.h>
 
 //#define TEST_PARSER
-#define INPUT_FILE "input2.txt"
+#define INPUT_FILE "input.txt"
+#define BOUNDARY "abcd"
+//#define BOUNDARY "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
 
 using namespace std;
 
@@ -80,11 +82,12 @@ main() {
 	#endif
 	
 	for (int i = 0; i < 5; i++) {
-		parser.setBoundary("abcd");
+		printf("------------\n");
+		parser.setBoundary(BOUNDARY);
 		
 		FILE *f = fopen(INPUT_FILE, "rb");
 		while (!parser.stopped() && !feof(f)) {
-			char buf[100];
+			char buf[1024 * 32];
 			size_t len = fread(buf, 1, sizeof(buf), f);
 			size_t fed = 0;
 			do {

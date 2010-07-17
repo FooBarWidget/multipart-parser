@@ -56,8 +56,8 @@ private:
 		onPartBegin   = NULL;
 		onHeaderField = NULL;
 		onHeaderValue = NULL;
-		onHeaderDone  = NULL;
-		onHeadersDone = NULL;
+		onHeaderEnd   = NULL;
+		onHeadersEnd  = NULL;
 		onPartData    = NULL;
 		onPartEnd     = NULL;
 		onEnd         = NULL;
@@ -224,8 +224,8 @@ public:
 	Callback onPartBegin;
 	Callback onHeaderField;
 	Callback onHeaderValue;
-	Callback onHeaderDone;
-	Callback onHeadersDone;
+	Callback onHeaderEnd;
+	Callback onHeadersEnd;
 	Callback onPartData;
 	Callback onPartEnd;
 	Callback onEnd;
@@ -364,6 +364,7 @@ public:
 			case HEADER_VALUE:
 				if (c == CR) {
 					dataCallback(onHeaderValue, headerValueMark, buffer, i, len, true, true);
+					callback(onHeaderEnd);
 					state = HEADER_VALUE_ALMOST_DONE;
 				}
 				break;
@@ -373,7 +374,6 @@ public:
 					return i;
 				}
 				
-				callback(onHeaderDone);
 				state = HEADER_FIELD_START;
 				break;
 			case HEADERS_ALMOST_DONE:
@@ -382,7 +382,7 @@ public:
 					return i;
 				}
 				
-				callback(onHeadersDone);
+				callback(onHeadersEnd);
 				state = PART_DATA_START;
 				break;
 			case PART_DATA_START:
