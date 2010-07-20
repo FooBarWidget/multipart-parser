@@ -153,7 +153,7 @@ main() {
 	
 	unsigned long long a = (unsigned long long) stime.tv_sec * 1000000 + stime.tv_usec;
 	unsigned long long b = (unsigned long long) etime.tv_sec * 1000000 + etime.tv_usec;
-	printf("(C++)    Total: %.2f s   Per run: %.2f s   Throughput: %.2f MB/sec\n",
+	printf("(C++)    Total: %.2fs   Per run: %.2fs   Throughput: %.2f MB/sec\n",
 		(b - a) / 1000000.0,
 		(b - a) / TIMES / 1000000.0,
 		((unsigned long long) sbuf.st_size * TIMES) / ((b - a) / 1000000.0) / 1024.0 / 1024.0);

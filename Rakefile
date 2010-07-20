@@ -34,5 +34,5 @@ end
 task :benchmark => 'multipart' do
 	sh "./multipart"
 	sh "ruby rack-parser.rb"
-	sh "node multipart_parser.js"
+	sh "node formidable_parser.js"
 end

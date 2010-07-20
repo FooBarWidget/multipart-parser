@@ -206,7 +206,7 @@ result = Benchmark.measure do
     Multipart.parse_multipart(env)
   end
 end
-printf "(Ruby)  Total: %.2f s   Per run: %.2f s   Throughput: %.2f MB/sec\n",
+printf "(Ruby)   Total: %.2fs   Per run: %.2fs   Throughput: %.2f MB/sec\n",
 	result.total,
 	result.total / TIMES,
 	(File.size(FILENAME) * TIMES) / result.total / 1024.0 / 1024.0
