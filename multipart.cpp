@@ -1,11 +1,19 @@
 #include "MultipartParser.h"
 #include "MultipartReader.h"
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <stdio.h>
+#include <unistd.h>
 
 //#define TEST_PARSER
-#define INPUT_FILE "input.txt"
-#define BOUNDARY "abcd"
-//#define BOUNDARY "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
+#define INPUT_FILE "input3.txt"
+//#define BOUNDARY "abcd"
+#define BOUNDARY "-----------------------------168072824752491622650073"
+#define TIMES 10
+#define SLURP
+#define QUIET
+
 
 using namespace std;
 
@@ -67,37 +75,88 @@ int
 main() {
 	#ifdef TEST_PARSER
 		MultipartParser parser;
-		parser.onPartBegin = onPartBegin;
-		parser.onHeaderField = onHeaderField;
-		parser.onHeaderValue = onHeaderValue;
-		parser.onPartData = onPartData;
-		parser.onPartEnd = onPartEnd;
-		parser.onEnd = onEnd;
+		#ifndef QUIET
+			parser.onPartBegin = onPartBegin;
+			parser.onHeaderField = onHeaderField;
+			parser.onHeaderValue = onHeaderValue;
+			parser.onPartData = onPartData;
+			parser.onPartEnd = onPartEnd;
+			parser.onEnd = onEnd;
+		#endif
 	#else
 		MultipartReader parser;
-		parser.onPartBegin = onPartBegin;
-		parser.onPartData = onPartData;
-		parser.onPartEnd = onPartEnd;
-		parser.onEnd = onEnd;
+		#ifndef QUIET
+			parser.onPartBegin = onPartBegin;
+			parser.onPartData = onPartData;
+			parser.onPartEnd = onPartEnd;
+			parser.onEnd = onEnd;
+		#endif
 	#endif
 	
-	for (int i = 0; i < 5; i++) {
-		printf("------------\n");
-		parser.setBoundary(BOUNDARY);
+	struct timeval stime, etime;
+	struct stat sbuf;
+	
+	stat(INPUT_FILE, &sbuf);
+	
+	#ifdef SLURP
+		size_t bufsize = sbuf.st_size;
+		char *buf = (char *) malloc(bufsize);
 		
 		FILE *f = fopen(INPUT_FILE, "rb");
-		while (!parser.stopped() && !feof(f)) {
-			char buf[1024 * 32];
-			size_t len = fread(buf, 1, sizeof(buf), f);
+		fread(buf, 1, bufsize, f);
+		fclose(f);
+		
+		gettimeofday(&stime, NULL);
+		for (int i = 0; i < TIMES; i++) {
+			#ifndef QUIET
+				printf("------------\n");
+			#endif
+			parser.setBoundary(BOUNDARY);
+			
 			size_t fed = 0;
 			do {
-				size_t ret = parser.feed(buf + fed, len - fed);
+				size_t ret = parser.feed(buf + fed, bufsize - fed);
 				fed += ret;
-				//printf("accepted %d bytes\n", (int) ret);
-			} while (fed < len && !parser.stopped());
+			} while (fed < bufsize && !parser.stopped());
+			#ifndef QUIET
+				printf("%s\n", parser.getErrorMessage());
+			#endif
 		}
-		printf("%s\n", parser.getErrorMessage());
-		fclose(f);
-	}
+		gettimeofday(&etime, NULL);
+	#else
+		size_t bufsize = 1024 * 32;
+		char *buf = (char *) malloc(bufsize);
+		
+		gettimeofday(&stime, NULL);
+		for (int i = 0; i < TIMES; i++) {
+			#ifndef QUIET
+				printf("------------\n");
+			#endif
+			parser.setBoundary(BOUNDARY);
+			
+			FILE *f = fopen(INPUT_FILE, "rb");
+			while (!parser.stopped() && !feof(f)) {
+				size_t len = fread(buf, 1, bufsize, f);
+				size_t fed = 0;
+				do {
+					size_t ret = parser.feed(buf + fed, len - fed);
+					fed += ret;
+				} while (fed < len && !parser.stopped());
+			}
+			#ifndef QUIET
+				printf("%s\n", parser.getErrorMessage());
+			#endif
+			fclose(f);
+		}
+		gettimeofday(&etime, NULL);
+	#endif
+	
+	unsigned long long a = (unsigned long long) stime.tv_sec * 1000000 + stime.tv_usec;
+	unsigned long long b = (unsigned long long) etime.tv_sec * 1000000 + etime.tv_usec;
+	printf("(C++)    Total: %.2f s   Per run: %.2f s   Throughput: %.2f MB/sec\n",
+		(b - a) / 1000000.0,
+		(b - a) / TIMES / 1000000.0,
+		((unsigned long long) sbuf.st_size * TIMES) / ((b - a) / 1000000.0) / 1024.0 / 1024.0);
+	
 	return 0;
 }

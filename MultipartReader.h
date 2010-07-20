@@ -32,7 +32,14 @@ private:
 	std::string currentHeaderName, currentHeaderValue;
 	void *userData;
 	
-	void setCallbacks() {
+	void resetReaderCallbacks() {
+		onPartBegin = NULL;
+		onPartData  = NULL;
+		onPartEnd   = NULL;
+		onEnd       = NULL;
+	}
+	
+	void setParserCallbacks() {
 		parser.onPartBegin   = cbPartBegin;
 		parser.onHeaderField = cbHeaderField;
 		parser.onHeaderValue = cbHeaderValue;
@@ -108,11 +115,13 @@ public:
 	Callback onEnd;
 	
 	MultipartReader() {
-		setCallbacks();
+		resetReaderCallbacks();
+		setParserCallbacks();
 	}
 	
 	MultipartReader(const std::string &boundary): parser(boundary) {
-		setCallbacks();
+		resetReaderCallbacks();
+		setParserCallbacks();
 	}
 	
 	void reset() {
