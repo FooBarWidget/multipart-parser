@@ -122,12 +122,12 @@ private:
 	}
 	
 	void processPartData(size_t &prevIndex, size_t &index, const char *buffer,
-		size_t len, size_t boundaryEnd, size_t &i, char c, int &flags)
+		size_t len, size_t boundaryEnd, size_t &i, char c, State &state, int &flags)
 	{
 		prevIndex = index;
 		
 		if (index == 0) {
-			// boyer-moore derrived algorithm to safely skip non-boundary data
+			// boyer-moore derived algorithm to safely skip non-boundary data
 			while (i + boundarySize <= len) {
 				if (isBoundaryChar(buffer[i + boundaryEnd])) {
 					break;
@@ -389,8 +389,7 @@ public:
 				state = PART_DATA;
 				partDataMark = i;
 			case PART_DATA:
-				processPartData(prevIndex, index, buffer, len, boundaryEnd,
-					i, c, flags);
+				processPartData(prevIndex, index, buffer, len, boundaryEnd, i, c, state, flags);
 				break;
 			default:
 				return i;
