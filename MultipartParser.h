@@ -171,7 +171,9 @@ private:
 				}
 			} else if (flags & LAST_BOUNDARY) {
 				if (c == HYPHEN) {
-					index++;
+                    callback(onPartEnd);
+                    callback(onEnd);
+                    state = END;
 				} else {
 					index = 0;
 				}
