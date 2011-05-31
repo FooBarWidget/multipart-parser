@@ -30,13 +30,13 @@ private:
 	bool headersProcessed;
 	MultipartHeaders currentHeaders;
 	std::string currentHeaderName, currentHeaderValue;
-	void *userData;
 	
 	void resetReaderCallbacks() {
 		onPartBegin = NULL;
 		onPartData  = NULL;
 		onPartEnd   = NULL;
 		onEnd       = NULL;
+        userData    = NULL;
 	}
 	
 	void setParserCallbacks() {
@@ -113,6 +113,7 @@ public:
 	PartDataCallback onPartData;
 	Callback onPartEnd;
 	Callback onEnd;
+    void *userData;
 	
 	MultipartReader() {
 		resetReaderCallbacks();
