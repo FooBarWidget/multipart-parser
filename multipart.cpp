@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 //#define TEST_PARSER
 #define INPUT_FILE "input3.txt"
