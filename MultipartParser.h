@@ -135,6 +135,9 @@ private:
 				
 				i += boundarySize;
 			}
+			if (i == len) {
+				return;
+			}
 			c = buffer[i];
 		}
 		
