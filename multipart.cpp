@@ -3,9 +3,10 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 
 //#define TEST_PARSER
 #define INPUT_FILE "input3.txt"
