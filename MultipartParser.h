@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <string>
 #include <stdexcept>
+#include <cstring>
 
 class MultipartParser {
 public:
