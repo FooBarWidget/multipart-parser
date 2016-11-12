@@ -397,6 +397,8 @@ public:
 			case PART_DATA:
 				processPartData(prevIndex, index, buffer, len, boundaryEnd, i, c, state, flags);
 				break;
+			case END:
+				break;
 			default:
 				return i;
 			}
